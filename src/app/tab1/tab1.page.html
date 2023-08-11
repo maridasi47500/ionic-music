@@ -14,10 +14,39 @@
   </ion-header>
 
 
-	  <input type="file" class="file-input"
+	  <input type="file" class="file-input" data-attrname="filename"
 	         [accept]="requiredFileType"
 		        (change)="onFileSelected($event)" #fileUpload>
 
+	  <div>
+		  <ion-list>
+			    <ion-item>
+				        <ion-input (input)="setMyValue($event)" labelPlacement="floating" value="" data-attrname="title">
+						   <div slot="label">titre <ion-text color="danger">(Required)</ion-text></div>
+						         </ion-input>
+						          </ion-item>
+			    <ion-item>
+				        <ion-input (input)="setMyValue($event)" labelPlacement="floating" data-attrname="artist" value="">
+						       <div slot="label">artiste <ion-text color="danger">(Required)</ion-text></div>
+						           </ion-input>
+						             </ion-item>
+			    <ion-item>
+				        <ion-input (input)="setMyValue($event)" labelPlacement="floating" data-attrname="composer" value="">
+						      <div slot="label">compositeur <ion-text color="danger">(Required)</ion-text></div>
+						          </ion-input>
+							   </ion-item>
+							   <ion-item>
+								       <ion-textarea aria-label="Comments" value="" data-attrname="description" (input)="setMyValue($event)"></ion-textarea>
+						      <div slot="label">description <ion-text color="danger">(Required)</ion-text></div>
+								         </ion-item>
+		  </ion-list>
+	  </div>
+	  <div>
+	  <label>image</label>
+	  <input type="file" class="image-input" data-attrname="image"
+	         [accept]="requiredImage"
+		        (change)="onImageSelected($event)" #imageUpload>
+	  </div>
 	  <div class="file-upload">
 
 		     {{fileName || "No file uploaded yet."}}
@@ -33,6 +62,7 @@
 	  <div class="progress" *ngIf="progress">
 		  	<div class="progress-bar" [style.width]="progress + '%'">{{progress}}%</div>
 	  </div>
+	  <ion-button (click)="ajouterunechanson()">Default</ion-button> 
 
   <app-explore-container name="Tab 1 page">
 

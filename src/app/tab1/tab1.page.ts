@@ -1,6 +1,6 @@
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Song } from "../entity/song";
-import { AppDataSource } from "../db";
+import { MyAppDataSource } from "../db";
 import { FileOpener } from '@ionic-native/file-opener/ngx';
 import { Component, Input } from '@angular/core'
 import { Subscription } from 'rxjs';
@@ -22,29 +22,43 @@ import { throwError } from "rxjs";
 })
 export class Tab1Page {
 	  progress: number;
+	  mydata:any={"title":"","composer":"","description":"","artist":"","filename":"","image":""};
 
       @Input()
           requiredFileType:string;
-
+          requiredImageType:string;
+	  imageFilename;
+          imageContent;
 	      fileName = '';
 	          uploadProgress:number;
 		      uploadSub: Subscription;
 
-		          constructor(private fileOpener:FileOpener, private http: HttpClient) {}
+		          constructor(private myDataSource:MyAppDataSource,private fileOpener:FileOpener, private http: HttpClient) {}
 
 
-			      onFileSelected(event:any) {
-				              const file:File = event.target.files[0];
+			      ajouterunechanson() {
+				              const file:File = document.getElementById("fileUpload").files[0];
 					              var types = !((/audio\/mpeg|audio\/mp3|audio\/mp4|audio\/ogg|audio\/x+|wav/).test(file.type));
 
 						            if(!!types){
 								               alert('no audio file');
 									                  return;
 											        };
+				              const image:File = document.getElementById("imageUpload").files[0];
+					              var imagetypes = !((/image\/png|image\/gif|audio\/x+|wav/).test(image.type));
+
+						            if(!!imagetypes){
+								               alert('no image file');
+									                  return;
+											        };
 					            
 					              if (file) {
 							                  this.fileName = file.name;
-									  this.previewFile(file, this.fileName);
+									  if(image){
+										  this.imageFilename=image.name;
+								          
+									  }
+									  this.previewFile(file, this.fileName,image,this.imageFilename);
 
 
 																										            
@@ -75,6 +89,9 @@ export class Tab1Page {
 																													            .toPromise();
 																																				              }
 																														      }
+																														      setMyValue(event:any){
+																															      this.mydata[event.target.dataset.attrname]=event.target.value;
+																														      }
 
 
 																																						    cancelUpload() {
@@ -87,11 +104,36 @@ export class Tab1Page {
 
 																																											  }
 
-																																									previewFile(myfile:any,myfilename:any) {
+																																									previewFile(myfile:any,myfilename:any,myimagefile:any,myimagefilename:any) {
 
+																																										  var readerimage  = new FileReader();
+
+																																										    readerimage.onload = (e) => {
+																																											    if (reader.result){
+																																												    this.imageContent=reader.result as string;
+																																												    const makeSecretDirImg = async () => {
+																																													      await Filesystem.mkdir({
+																																														          path: 'secrets/',
+																																															      directory: Directory.Documents,
+																																															        });
+																																												    };
+																																												    makeSecretDirImg();
+																																												    const writeSecretFileImg = async () => {
+																																													      await Filesystem.writeFile({
+		          path: 'secrets/'+this.imageFilename,
+			        data: this.imageContent,
+				      directory: Directory.Documents,
+				            encoding: Encoding.UTF8,
+					        });
+																																												    }
+																																												    writeSecretFileImg();
+																																										            }
+																																										    }
+
+																																										  reader.readAsDataURL(myimagefile);
 																																										  var reader  = new FileReader();
 
-																																										    reader.onloadend = function () {
+																																										    reader.onload = (e) => {
 																																											        console.log(reader.result); //this is an ArrayBuffer
 																																											    if (reader.result){
 																																											    var result=reader.result as string;
@@ -117,16 +159,16 @@ export class Tab1Page {
 
 
 																																												    const photo = new Song()
-																																												    photo.title = "Me and Bears"
-																																												    photo.artist = ""
-																																												    photo.composer = ""
-																																												    photo.description = ""
-																																												    photo.image = title
+																																												    photo.title = this.mydata["title"]
+																																												    photo.artist = this.mydata["artist"]
+																																												    photo.composer = this.mydata["composer"]
+																																												    photo.description = this.mydata["description"]
+																																												    photo.image = this.imageFilename;
 																																												    photo.filename = title
 																																												    photo.views = 1
 																																												    photo.isPublished = true
 
-																																												    await AppDataSource.manager.save(photo)
+																																												    await this.myDataSource.AppDataSource.manager.save(photo)
 																																												    console.log("Song has been saved. Song id is", photo.id)
 
 																																											    }
