@@ -2,54 +2,77 @@ import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Song } from "../entity/song";
 import { MyAppDataSource } from "../db";
 import { FileOpener } from '@ionic-native/file-opener/ngx';
-import { Component, Input } from '@angular/core'
+import { Component, Input,OnInit } from '@angular/core'
 import { Subscription } from 'rxjs';
 import { HttpClient, HttpEventType } from '@angular/common/http';
 import {
 	      HttpErrorResponse
 } from "@angular/common/http";
+import { OrmService } from '../services/orm.service';
+import { SQLiteService } from '../services/sqlite.service';
+import { AuthorPostService } from '../services/author-post.service';
 
 import { map, catchError } from "rxjs/operators";
 
 import { throwError } from "rxjs";
 
-
+import {  ViewChild, ElementRef } from '@angular/core';
 
 @Component({
   selector: 'app-tab1',
   templateUrl: 'tab1.page.html',
   styleUrls: ['tab1.page.scss']
 })
-export class Tab1Page {
+export class Tab1Page implements OnInit {
+      @ViewChild("fileUpload") fileUpload: ElementRef;
+      @ViewChild("imageUpload") imageUpload: ElementRef;
 	  progress: number;
 	  mydata:any={"title":"","composer":"","description":"","artist":"","filename":"","image":""};
 
       @Input()
-          requiredFileType:string;
-          requiredImageType:string;
-	  imageFilename;
-          imageContent;
+          requiredFileType:string="audio/*";
+          requiredImage:string;
+          requiredImageType:string = "image/*";
+	  imageFilename:any;
+          imageContent:any;
 	      fileName = '';
 	          uploadProgress:number;
 		      uploadSub: Subscription;
 
-		          constructor(private myDataSource:MyAppDataSource,private fileOpener:FileOpener, private http: HttpClient) {}
+		          constructor(private sqliteService: SQLiteService, private authorPostService: AuthorPostService,private ormService: OrmService,private myDataSource:MyAppDataSource,private fileOpener:FileOpener, private http: HttpClient) {}
 
+ ngOnInit(): void {
 
+    this.initOrmService().then (async () => {
+      if(!this.ormService.isOrmService) {
+        throw new Error(`Error: TypeOrm Service didn't start`);
+      }
+    });
+
+  }
+    async initOrmService() {
+    try {
+      await this.ormService.initialize();
+      console.log(`*** ORM service has been initialized ***`)
+    } catch(err: any) {
+      const msg = err.message ? err.message : err
+      throw new Error(`Error: ${msg}`);
+    }
+  }
 			      ajouterunechanson() {
-				              const file:File = document.getElementById("fileUpload").files[0];
+				              const file:File = this.fileUpload.nativeElement.files[0];
 					              var types = !((/audio\/mpeg|audio\/mp3|audio\/mp4|audio\/ogg|audio\/x+|wav/).test(file.type));
 
 						            if(!!types){
 								               alert('no audio file');
 									                  return;
 											        };
-				              const image:File = document.getElementById("imageUpload").files[0];
-					              var imagetypes = !((/image\/png|image\/gif|audio\/x+|wav/).test(image.type));
+				              const image:File = this.imageUpload.nativeElement.files[0];
+					              var imagetypes = !((/image\/png|image\/jpg|image\/gif|audio\/x+|wav/).test(image.type));
 
 						            if(!!imagetypes){
 								               alert('no image file');
-									                  return;
+									                  
 											        };
 					            
 					              if (file) {
@@ -117,7 +140,11 @@ export class Tab1Page {
 																																															      directory: Directory.Documents,
 																																															        });
 																																												    };
-																																												    makeSecretDirImg();
+                                                                                                                                                                                                                                                                                                                                                                    try{
+                                                                                                                                                                                                                                                                                                                                                                        makeSecretDirImg();
+                                                                                                                                                                                                                                                                                                                                                                    }catch(e){console.log(e);
+                                                                                                                                                                                                                                                                                                                                                                    }
+																																												    
 																																												    const writeSecretFileImg = async () => {
 																																													      await Filesystem.writeFile({
 		          path: 'secrets/'+this.imageFilename,
@@ -130,7 +157,7 @@ export class Tab1Page {
 																																										            }
 																																										    }
 
-																																										  reader.readAsDataURL(myimagefile);
+																																										  readerimage.readAsDataURL(myimagefile);
 																																										  var reader  = new FileReader();
 
 																																										    reader.onload = (e) => {
@@ -168,9 +195,22 @@ export class Tab1Page {
 																																												    photo.views = 1
 																																												    photo.isPublished = true
 
-																																												    await this.myDataSource.AppDataSource.manager.save(photo)
-																																												    console.log("Song has been saved. Song id is", photo.id)
-
+                                                                                                                                                                                                                                                                                                                                                                                               
+                                                                                                                                                                                                                                                                                                                                                                                                    const x= async () =>{
+                                                                                                                                                                                                                                                                                                                                                                                                         try {
+                                                                                                                                                                                                                                                                                                                                                                                                       await this.authorPostService.getSong(photo);
+                                                                                                                                                                                                                                                                                                                                                                                                       
+                                                                                                                                                                                                                                                                                                                                                                                                       if (this.sqliteService.getPlatform() === 'web') {
+                                                                                                                                                                                                                                                                                                                                                                                                         // save the databases from memory to store
+                                                                                                                                                                                                                                                                                                                                                                                                         //await this.sqliteService.getSqliteConnection().saveToStore(this.authorPostService.database);
+                                                                                                                                                                                                                                                                                                                                                                                                       }
+                                                                                                                                                                                                                                                                                                                                                                                                     } catch (err: any) {
+                                                                                                                                                                                                                                                                                                                                                                                                       const msg = err.message ? err.message : err;
+                                                                                                                                                                                                                                                                                                                                                                                                       console.log(`onSubmit Post: ${err}`);
+                                                                                                                                                                                                                                                                                                                                                                                                       
+                                                                                                                                                                                                                                                                                                                                                                                                     }																																												    console.log("Song has been saved. Song id is", photo.id)
+                                                                                                                                                                                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                                                                                                                                                                                    x();
 																																											    }
 																																											    }
 																																												 }

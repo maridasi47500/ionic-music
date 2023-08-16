@@ -12,12 +12,13 @@
       <ion-title size="large">Tab 1</ion-title>
     </ion-toolbar>
   </ion-header>
-
+<div>
+	  <label>fichier de musique</label>
 
 	  <input type="file" class="file-input" data-attrname="filename"
 	         [accept]="requiredFileType"
-		        (change)="onFileSelected($event)" #fileUpload>
-
+		         #fileUpload>
+</div>
 	  <div>
 		  <ion-list>
 			    <ion-item>
@@ -44,8 +45,8 @@
 	  <div>
 	  <label>image</label>
 	  <input type="file" class="image-input" data-attrname="image"
-	         [accept]="requiredImage"
-		        (change)="onImageSelected($event)" #imageUpload>
+	         [accept]="requiredImageType"
+		         #imageUpload>
 	  </div>
 	  <div class="file-upload">
 
@@ -62,7 +63,7 @@
 	  <div class="progress" *ngIf="progress">
 		  	<div class="progress-bar" [style.width]="progress + '%'">{{progress}}%</div>
 	  </div>
-	  <ion-button (click)="ajouterunechanson()">Default</ion-button> 
+	  <ion-button (click)="ajouterunechanson()">cliquez ici</ion-button> 
 
   <app-explore-container name="Tab 1 page">
 
