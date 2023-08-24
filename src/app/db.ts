@@ -25,8 +25,13 @@ export class MyAppDataSource implements OnInit {
 // For more information see https://typeorm.io/data-source#creating-a-new-datasource
         x:any;
         datasource:any;
-        async AppDataSource() {
-           const sqliteConnection = new SQLiteConnection(CapacitorSQLite);
+      
+
+// to initialize initial connection with the database, register all entities
+// and "synchronize" database schema, call "initialize()" method of a newly created database
+// once in your application bootstrap
+async ngOnInit(){
+    const sqliteConnection = new SQLiteConnection(CapacitorSQLite);
 
 // copy preloaded dbs (optional, not TypeORM related):
 // the preloaded dbs must have the `YOUR_DB_NAME.db` format (i.e. including 
@@ -46,16 +51,6 @@ this.datasource.setOptions({
    dropSchema: true,
 })
   return this.datasource;
-        }
-
-// to initialize initial connection with the database, register all entities
-// and "synchronize" database schema, call "initialize()" method of a newly created database
-// once in your application bootstrap
-async ngOnInit(){
-    this.AppDataSource();
-
-
-
 
 }
   async save(song:any) {

@@ -1,43 +1,61 @@
 import { Injectable } from '@angular/core';
 
 import { Capacitor } from '@capacitor/core';
-import { CapacitorSQLite, SQLiteDBConnection, SQLiteConnection, capSQLiteSet,
+import { CapacitorSQLite, SQLiteDBConnection, CapacitorSQLitePlugin,SQLiteConnection, capSQLiteSet,
          capSQLiteChanges, capSQLiteValues, capEchoResult, capSQLiteResult 
         } from '@capacitor-community/sqlite';
-import { CapacitorSQLitePlugin } from '@capacitor-community/sqlite';
 
 @Injectable()
 
 export class SQLiteService {
-    sqlite: SQLiteConnection = new SQLiteConnection(CapacitorSQLite);
-    sqliteConnection: SQLiteConnection = new SQLiteConnection(CapacitorSQLite);
-    /*sqliteweb:CapacitorSQLiteWeb;
-    sqlitewebconnection:CapacitorSQLiteWeb;*/
+    sqlite: SQLiteConnection;
     isService: boolean = false;
     platform: string;
     sqlitePlugin: any;
     native: boolean = false;
- //sqliteConnection: SQLiteConnection;
+    x: CapacitorSQLitePlugin;
     constructor() {
-              this.platform = Capacitor.getPlatform();
-      if(this.platform === 'ios' || this.platform === 'android') {this.native = true;}
-      this.sqlitePlugin = CapacitorSQLite;
-      
-      this.isService = true;
-
     }
+    
     /**
      * Plugin Initialization
      */
+ 
+    async initWebStore(): Promise<void> {
+        this.ensureIsWebPlatform();
+        this.ensureConnectionIsOpen();
+        return this.sqlite.initWebStore();
+    }
+    async saveToStore(database: string): Promise<void> {
+        this.ensureIsWebPlatform();
+        this.ensureConnectionIsOpen();
+        return this.sqlite.saveToStore(database);
+    }
+
+    private ensureConnectionIsOpen() {
+        if ( this.sqlite == null ) {
+            throw new Error(`no connection open`);
+        }
+    }
+
+    private ensureIsNativePlatform() {
+        if ( !this.native ) {
+            throw new Error(`Not implemented for ${this.platform} platform`);
+        }
+    }
+
+    private ensureIsWebPlatform() {
+        if ( this.platform !== 'web' ) {
+            throw new Error(`Not implemented for ${this.platform} platform`);
+        }
+    }
     initializePlugin(): Promise<boolean> {
         return new Promise (resolve => {
             this.platform = Capacitor.getPlatform();
             if(this.platform === 'ios' || this.platform === 'android') this.native = true;
-            console.log("*** native " + this.native)
             this.sqlitePlugin = CapacitorSQLite;
             this.sqlite = new SQLiteConnection(this.sqlitePlugin);
             this.isService = true;
-            console.log("$$$ in service this.isService " + this.isService + " $$$")
             resolve(true);
         });
     }
@@ -50,7 +68,7 @@ export class SQLiteService {
             try {
                 return await this.sqlite.echo(value);
             } catch (err) {
-                return Promise.reject(`my error : ${err}`);
+                return Promise.reject('error : ${err}');
             }
         } else {
             return Promise.reject(new Error("no connection open"));
@@ -64,7 +82,7 @@ export class SQLiteService {
             try {
                 return Promise.resolve(await this.sqlite.isSecretStored());
             } catch (err) {
-                return Promise.reject(`my error : ${err}`);
+                return Promise.reject('error : ${err}');
             }
         } else {
             return Promise.reject(new Error(`no connection open`));
@@ -78,7 +96,7 @@ export class SQLiteService {
             try {
                 return Promise.resolve(await this.sqlite.setEncryptionSecret(passphrase));
             } catch (err) {
-                return Promise.reject(`my error : ${err}`);
+                return Promise.reject('error : ${err}');
             }
         } else {
             return Promise.reject(new Error(`no connection open`));
@@ -94,7 +112,7 @@ export class SQLiteService {
             try {
                 return Promise.resolve(await this.sqlite.changeEncryptionSecret(passphrase, oldpassphrase));
             } catch (err) {
-                return Promise.reject(`my error : ${err}`);
+                return Promise.reject('error : ${err}');
             }
         } else {
             return Promise.reject(new Error(`no connection open`));
@@ -116,11 +134,10 @@ export class SQLiteService {
                                         : Promise<void> {
         if(this.sqlite != null) {
             try {
-                await this.sqlite.addUpgradeStatement(database, fromVersion, toVersion,
-                                                      statement, set ? set : []);
+                await this.sqlite.addUpgradeStatement(database, fromVersion, [String(toVersion)]);
                 return Promise.resolve();
             } catch (err) {
-                return Promise.reject(`my error : ${err}`);
+                return Promise.reject('error : ${err}');
             }
         } else {
             return Promise.reject(new Error(`no connection open for ${database}`));
@@ -139,14 +156,14 @@ export class SQLiteService {
         if(this.sqlite != null) {
             try {
                 const db: SQLiteDBConnection = await this.sqlite.createConnection(
-                                database, encrypted, mode, version);
+                                database, encrypted, mode, version,false);
                 if (db != null) {
                     return Promise.resolve(db);
                 } else {
                     return Promise.reject(new Error(`no db returned is null`));
                 }
             } catch (err) {
-                return Promise.reject(`my error : ${err}`);
+                return Promise.reject('error : ${err}');
             }
         } else {
             return Promise.reject(new Error(`no connection open for ${database}`));
@@ -159,10 +176,10 @@ export class SQLiteService {
     async closeConnection(database:string): Promise<void> {
         if(this.sqlite != null) {
             try {
-                await this.sqlite.closeConnection(database);
+                await this.sqlite.closeConnection(database,false);
                 return Promise.resolve();
             } catch (err) {
-                return Promise.reject(`my error : ${err}`);
+                return Promise.reject('error : ${err}');
             }
         } else {
             return Promise.reject(new Error(`no connection open for ${database}`));
@@ -176,9 +193,9 @@ export class SQLiteService {
             Promise<SQLiteDBConnection> {
         if(this.sqlite != null) {
             try {
-                return Promise.resolve(await this.sqlite.retrieveConnection(database));
+                return Promise.resolve(await this.sqlite.retrieveConnection(database,false));
             } catch (err) {
-                return Promise.reject(`my error : ${err}`);
+                return Promise.reject('error : ${err}');
             }
         } else {
             return Promise.reject(new Error(`no connection open for ${database}`));
@@ -192,15 +209,14 @@ export class SQLiteService {
         if(this.sqlite != null) {
             try {
                 const myConns =  await this.sqlite.retrieveAllConnections();
-                /*
-                let keys = [...myConns.keys()];
+/*                let keys = [...myConns.keys()];
                 keys.forEach( (value) => {
                     console.log("Connection: " + value);
                 }); 
-                */
+*/
                 return Promise.resolve(myConns);
             } catch (err) {
-                return Promise.reject(`my error : ${err}`);
+                return Promise.reject('error : ${err}');
             }
         } else {
             return Promise.reject(new Error(`no connection open`));
@@ -214,7 +230,7 @@ export class SQLiteService {
             try {
                 return Promise.resolve(await this.sqlite.closeAllConnections());
             } catch (err) {
-                return Promise.reject(`my error : ${err}`);
+                return Promise.reject('error : ${err}');
             }
         } else {
             return Promise.reject(new Error(`no connection open`));
@@ -227,9 +243,9 @@ export class SQLiteService {
      async isConnection(database: string): Promise<capSQLiteResult> {
         if(this.sqlite != null) {
             try {
-                return Promise.resolve(await this.sqlite.isConnection(database));
+                return Promise.resolve(await this.sqlite.isConnection(database,false));
             } catch (err) {
-                return Promise.reject(`my error : ${err}`);
+                return Promise.reject('error : ${err}');
             }
         } else {
             return Promise.reject(new Error(`no connection open`));
@@ -239,13 +255,13 @@ export class SQLiteService {
      * Check Connections Consistency
      * @returns 
      */
-    async checkConnectionsConsistency(): Promise<capSQLiteResult> {
+    async checkConnectionConsistency(): Promise<capSQLiteResult> {
         if(this.sqlite != null) {
             try {
                 const res = await this.sqlite.checkConnectionsConsistency();
                 return Promise.resolve(res);
             } catch (err) {
-                return Promise.reject(`my error : ${err}`);
+                return Promise.reject('error : ${err}');
             }
         } else {
             return Promise.reject(new Error(`no connection open`));
@@ -260,7 +276,7 @@ export class SQLiteService {
             try {
                 return Promise.resolve(await this.sqlite.isDatabase(database));
             } catch (err) {
-                return Promise.reject(`my error : ${err}`);
+                return Promise.reject('error : ${err}');
             }
         } else {
             return Promise.reject(new Error(`no connection open`));
@@ -274,7 +290,7 @@ export class SQLiteService {
             try {
                 return Promise.resolve(await this.sqlite.getDatabaseList());
             } catch (err) {
-                return Promise.reject(`my error : ${err}`);
+                return Promise.reject('error : ${err}');
             }
         } else {
             return Promise.reject(new Error(`no connection open`));
@@ -292,7 +308,7 @@ export class SQLiteService {
                 const path: string = folderPath ? folderPath : "default";
                 return Promise.resolve(await this.sqlite.addSQLiteSuffix(path));
             } catch (err) {
-                return Promise.reject(`my error : ${err}`);
+                return Promise.reject('error : ${err}');
             }
         } else {
             return Promise.reject(new Error(`no connection open`));
@@ -310,7 +326,7 @@ export class SQLiteService {
                 const path: string = folderPath ? folderPath : "default";
                 return Promise.resolve(await this.sqlite.deleteOldDatabases(path));
             } catch (err) {
-                return Promise.reject(`my error : ${err}`);
+                return Promise.reject('error : ${err}');
             }
         } else {
             return Promise.reject(new Error(`no connection open`));
@@ -326,7 +342,7 @@ export class SQLiteService {
             try {
                 return Promise.resolve(await this.sqlite.importFromJson(jsonstring));
             } catch (err) {
-                return Promise.reject(`my error : ${err}`);
+                return Promise.reject('error : ${err}');
             }
         } else {
             return Promise.reject(new Error(`no connection open`));
@@ -344,7 +360,7 @@ export class SQLiteService {
             try {
                 return Promise.resolve(await this.sqlite.isJsonValid(jsonstring));
             } catch (err) {
-                return Promise.reject(`my error : ${err}`);
+                return Promise.reject('error : ${err}');
             }
         } else {
             return Promise.reject(new Error(`no connection open`));
@@ -360,30 +376,19 @@ export class SQLiteService {
             try {
                 return Promise.resolve(await this.sqlite.copyFromAssets());
             } catch (err) {
-                return Promise.reject(`my error : ${err}`);
+                return Promise.reject('error : ${err}');
             }
         } else {
             return Promise.reject(new Error(`no connection open`));
         }
       }
-      /***************/
-      
-      
-        async initializeWebStore() {
-      if(this.platform === 'web') {
-        try {
-          await this.getSqliteConnection().initWebStore();
-        } catch (err) {
-          console.log(`Error: ${err}`);
-          throw new Error(`Error: ${err}`)
-        }
-      }
-    }
+
+
     /**
      * Get the Sqlite Plugin
      * @returns
      */
-    getSqlitePlugin(): CapacitorSQLitePlugin {
+    getSqlitePlugin() {
       return this.sqlitePlugin;
     }
     /**
@@ -398,7 +403,7 @@ export class SQLiteService {
      * @returns
      */
     getSqliteConnection() {
-      return this.sqliteConnection;
+      return this.sqlite;
     }
     /**
      * Get if the platform is native
@@ -418,17 +423,7 @@ export class SQLiteService {
      * Check Connection Consistency
      * @returns
      */
-    async checkConnectionConsistency(): Promise<void> {
-      try {
-/*        await this.sqlitePlugin.checkConnectionsConsistency({
-          dbNames: [], // i.e. "i expect no connections to be open"
-        });
-*/
-        await this.getSqliteConnection().checkConnectionsConsistency();
-      } catch (err: any) {
-        const msg = err.message ? err.message : err;
-        return Promise.reject(`Error: ${msg}`);
-      }
-    }
+
+
     
 }

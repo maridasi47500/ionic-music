@@ -9,10 +9,14 @@ import { Tab1PageRoutingModule } from './tab1-routing.module';
 import { MatIconModule } from '@angular/material/icon'
  
 import { FileOpener } from '@ionic-native/file-opener/ngx';
+import {AuthorPostService } from '../services/author-post.service';
+import {OrmService } from '../services/orm.service';
 
 @NgModule({
 	providers:[
 		FileOpener,
+		AuthorPostService,
+		OrmService,
                 MyAppDataSource
 	],
   imports: [

@@ -12,7 +12,7 @@ export class SQLiteService {
     sqlitePlugin: any;
     native = false;
 
-    constructor(private x: CapacitorSQLitePlugin, private y: typeof CapacitorSQLite) {
+    constructor(@Inject(CapacitorSQLitePlugin) private x: CapacitorSQLitePlugin, private y: typeof CapacitorSQLite) {
 
     }
 

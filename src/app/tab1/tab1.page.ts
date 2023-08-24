@@ -8,6 +8,9 @@ import { HttpClient, HttpEventType } from '@angular/common/http';
 import {
 	      HttpErrorResponse
 } from "@angular/common/http";
+ import { Plugins } from '@capacitor/core';
+ import * as CapacitorSQLPlugin from '@capacitor-community/sqlite';
+ const { CapacitorSQLite,Device } = Plugins;
 import { OrmService } from '../services/orm.service';
 import { SQLiteService } from '../services/sqlite.service';
 import { AuthorPostService } from '../services/author-post.service';
@@ -24,11 +27,73 @@ import {  ViewChild, ElementRef } from '@angular/core';
   styleUrls: ['tab1.page.scss']
 })
 export class Tab1Page implements OnInit {
+       _sqlite: any;
       @ViewChild("fileUpload") fileUpload: ElementRef;
       @ViewChild("imageUpload") imageUpload: ElementRef;
 	  progress: number;
 	  mydata:any={"title":"","composer":"","description":"","artist":"","filename":"","image":""};
+  async ngAfterViewInit() {
+     const info = this.sqliteService;
+     if (info.getPlatform() === "ios" || info.getPlatform() === "android") {
+       this._sqlite = CapacitorSQLite;
+     } else {
+       this._sqlite = CapacitorSQLPlugin.CapacitorSQLite;
+     }
 
+   }
+
+   async testSQLitePlugin() {
+       let result:any = await this._sqlite.open({database:"testsqlite"});
+       var retOpenDB = result.result;
+       if(retOpenDB) {
+           // Create Tables if not exist
+           let sqlcmd: string = `
+           BEGIN TRANSACTION;
+           CREATE TABLE IF NOT EXISTS users (
+               id INTEGER PRIMARY KEY NOT NULL,
+               email TEXT UNIQUE NOT NULL,
+               name TEXT,
+               age INTEGER
+           );
+           PRAGMA user_version = 1;
+           COMMIT TRANSACTION;
+           `;
+           var retExe: any = await this._sqlite.execute({statements:sqlcmd});
+           console.log('retExe ',retExe.changes);
+           // Insert some Users
+           sqlcmd = `
+           BEGIN TRANSACTION;
+           DELETE FROM users;
+           INSERT INTO users (name,email,age) VALUES ("Whiteley","Whiteley.com",30);
+           INSERT INTO users (name,email,age) VALUES ("Jones","Jones.com",44);
+           COMMIT TRANSACTION;
+           `;
+           retExe = await this._sqlite.execute({statements:sqlcmd});
+           console.log('retExe ',retExe.changes);
+           // Select all Users
+           sqlcmd = "SELECT * FROM users";
+           var retSelect: any = await this._sqlite.query({statement:sqlcmd,values:[]});
+           console.log('retSelect.values.length ',retSelect.values.length);
+           const row1: any = retSelect.values[0];
+           console.log("row1 users ",JSON.stringify(row1))
+           const row2: any = retSelect.values[1];
+           console.log("row2 users ",JSON.stringify(row2))
+
+           // Insert a new User with SQL and Values
+
+           sqlcmd = "INSERT INTO users (name,email,age) VALUES (?,?,?)";
+           let values: Array<any>  = ["Simpson","Simpson@example.com",69];
+           var retRun: any = await this._sqlite.run({statement:sqlcmd,values:values});
+           console.log('retRun ',retRun.changes);
+
+           // Select Users with age > 35
+           sqlcmd = "SELECT name,email,age FROM users WHERE age > ?";
+           retSelect = await this._sqlite.query({statement:sqlcmd,values:["35"]});
+           console.log('retSelect ',retSelect.values.length);
+           
+       
+       }
+   }
       @Input()
           requiredFileType:string="audio/*";
           requiredImage:string;
@@ -184,7 +249,7 @@ export class Tab1Page implements OnInit {
 																																												    }
 																																												    writeSecretFile();
 
-
+                                                                                                                                                                                                                                                                                                                                                                    const x= async () =>{
 																																												    const photo = new Song()
 																																												    photo.title = this.mydata["title"]
 																																												    photo.artist = this.mydata["artist"]
@@ -196,13 +261,15 @@ export class Tab1Page implements OnInit {
 																																												    photo.isPublished = true
 
                                                                                                                                                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                                                                                                                                                    const x= async () =>{
+                                                                                                                                                                                                                                                                                                                                                                                                   
                                                                                                                                                                                                                                                                                                                                                                                                          try {
+                                                                                                                                                                                                                                                                                                                                                                                                             console.log("await 1");
                                                                                                                                                                                                                                                                                                                                                                                                        await this.authorPostService.getSong(photo);
-                                                                                                                                                                                                                                                                                                                                                                                                       
+                                                                                                                                                                                                                                                                                                                                                                                                       console.log("awaitn02");
                                                                                                                                                                                                                                                                                                                                                                                                        if (this.sqliteService.getPlatform() === 'web') {
                                                                                                                                                                                                                                                                                                                                                                                                          // save the databases from memory to store
-                                                                                                                                                                                                                                                                                                                                                                                                         //await this.sqliteService.getSqliteConnection().saveToStore(this.authorPostService.database);
+                                                                                                                                                                                                                                                                                                                                                                                                           console.log("await no3");
+                                                                                                                                                                                                                                                                                                                                                                                                         await this.sqliteService.getSqliteConnection().saveToStore(this.authorPostService.database);
                                                                                                                                                                                                                                                                                                                                                                                                        }
                                                                                                                                                                                                                                                                                                                                                                                                      } catch (err: any) {
                                                                                                                                                                                                                                                                                                                                                                                                        const msg = err.message ? err.message : err;

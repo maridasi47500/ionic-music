@@ -1,12 +1,14 @@
-import { DataSource, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Injectable } from '@angular/core';
+import { DataSource } from 'typeorm';
 import { BehaviorSubject, Observable } from 'rxjs';
-
+import { Component, Input,OnInit } from '@angular/core'
+import MyDataSource from '../../data-source';
 import { Song } from '../entity/song';
 
 @Injectable()
 export class AuthorPostService {
-  public dataSource!: DataSource;
+  public dataSource: DataSource=MyDataSource;
   public database!: string;
   public songList: BehaviorSubject<Song[]> = new BehaviorSubject<Song[]>([]);
 
@@ -15,7 +17,7 @@ export class AuthorPostService {
   private isSongReady: BehaviorSubject<boolean> = new BehaviorSubject(false);
   private isAuthorReady: BehaviorSubject<boolean> = new BehaviorSubject(false);
   private isIdsSeqReady: BehaviorSubject<boolean> = new BehaviorSubject(false);
-  private songRepository!: Repository<Song>
+  private songRepository= MyDataSource.getRepository(Song);
 
   constructor() {}
   /**
@@ -23,11 +25,11 @@ export class AuthorPostService {
    * @returns
    */
   async initialize(): Promise<void> {
+      console.log("ok");
     console.log(`@@@ this.dataSource.isInitialized: ${this.dataSource.isInitialized} @@@@`)
     if (this.dataSource.isInitialized) {
       this.songRepository = this.dataSource.getRepository(Song);
-
-      console.log(`@@@ after create posts @@@@`)
+      console.log(`@@@ after create posts @@@@`);
       try {
     
         this.getAllSongs().then(() => {
