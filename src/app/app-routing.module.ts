@@ -9,6 +9,14 @@ const routes: Routes = [
   {
     path: 'your-url-here',
     loadChildren: () => import('./your-url-here/your-url-here.module').then( m => m.YourUrlHerePageModule)
+  },
+    {
+    path: 'song/:id',
+    loadChildren: () => import('./song/song.module').then( m => m.SongPageModule)
+  },
+  {
+    path: 'song',
+    loadChildren: () => import('./song/song.module').then( m => m.SongPageModule)
   }
 ];
 @NgModule({

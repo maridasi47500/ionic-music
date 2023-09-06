@@ -64,8 +64,20 @@
 		  	<div class="progress-bar" [style.width]="progress + '%'">{{progress}}%</div>
 	  </div>
 	  <ion-button (click)="ajouterunechanson()">cliquez ici</ion-button> 
-
-  <app-explore-container name="Tab 1 page">
-
-  </app-explore-container>
+<ion-list>
+    <ion-list-header>
+      Songs
+    </ion-list-header>
+    <ion-item lines="inset" *ngFor="let data of Data">
+      <ion-label>
+        <h5>{{data.artist}}</h5>
+        <p>{{data.title}}</p>
+      </ion-label>
+      <div class="item-note" item-end>
+        <ion-icon name="create" style="zoom:2.0" [routerLink]="['/song/', data.id]"></ion-icon>        
+        <ion-icon name="trash" style="zoom:2.0" (click)="deleteSong(data.id)"></ion-icon>
+      </div>
+    </ion-item>
+  </ion-list>
+  <app-explore-container name="Tab 1 page"></app-explore-container>
 </ion-content>

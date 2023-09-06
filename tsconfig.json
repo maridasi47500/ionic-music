@@ -1,8 +1,14 @@
 /* To learn more about this file see: https://angular.io/config/tsconfig. */
 {
-  "compileOnSave": false,
+  "compileOnSave": true,
   "compilerOptions": {
+          "types": [
+      "node"
+    ],
     "baseUrl": "./",
+ "typeRoots": [
+      "node_modules/@types"
+    ],
     "outDir": "./dist/out-tsc",
     "forceConsistentCasingInFileNames": true,
     "strict": true,
@@ -15,6 +21,11 @@
     "noFallthroughCasesInSwitch": true,
     "sourceMap": true,
     "declaration": false,
+    "skipLibCheck": true,
+	"emitDecoratorMetadata": true,
+	"removeComments": false,
+	"noImplicitAny": false,
+
     "downlevelIteration": true,
     "experimentalDecorators": true,
     "moduleResolution": "node",
@@ -26,12 +37,19 @@
       "es2018", 
       "dom"
     ],
+
     "useDefineForClassFields": false
   },
+  "exclude": [
+	"node_modules"
+  ],
+    "include": [
+    "src/**/*.ts"
+  ],
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,
     "strictInputAccessModifiers": true,
-    "strictTemplates": true
+    "strictTemplates": false
   }
 }

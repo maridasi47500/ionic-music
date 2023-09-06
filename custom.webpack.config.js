@@ -3,6 +3,7 @@
 
  console.log('The custom config is used');
  module.exports = {
+
    optimization: {
      minimize: true,
      minimizer: [
